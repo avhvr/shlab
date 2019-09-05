@@ -419,6 +419,21 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
+    int olderrno = errno;   /* save the errno to restore it later*/
+    sigset_t new_mask, old_mask;
+
+    Sigfillset(&new_mask);
+
+    /* block all signals temporarily and store the current mask to old_mask*/
+    Sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+
+    pid_t pid = fgpid(jobs);
+    if (pid > 0)
+        kill(-pid, sig);
+
+    /* restore the current mask to it's previous state*/
+    Sigprocmask(SIG_SETMASK, &old_mask, NULL);
+    errno = olderrno;   /* restore errno */
     return;
 }
 
