@@ -301,6 +301,36 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
+    struct job_t *job;      /* pointer to the job */
+
+    if (argv[1] == NULL) {  /* null argument  */
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
+
+    if (argv[1][0] == '%') {    /* jobid? */
+        job = getjobjid(jobs, atoi(&argv[1][1]));
+        if (job == NULL) {
+            printf("%s: No such job\n", argv[1]);
+            return;
+        }
+    } else {                    /* Nah it's pid */
+        job = getjobpid(jobs, atoi(&argv[1][0]));
+        if (job == NULL) {
+            printf("(%s): No such process\n", argv[1]);
+            return;
+        }
+    }
+
+    int bg = !strcmp(argv[0], "bg");    /* background job? */
+    job->state = bg ? BG : FG;
+    kill(-job->pid, SIGCONT);
+
+    if (bg)
+        printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
+    else
+        waitfg(job->pid);
+
     return;
 }
 
