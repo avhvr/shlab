@@ -84,6 +84,14 @@ void unix_error(char *msg);
 void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
+pid_t Fork(void);
+void Setpgid(pid_t pid, pid_t pgid);
+void Sigemptyset(sigset_t *set);
+void Sigfillset(sigset_t *set);
+void Sigaddset(sigset_t *set, int sig);
+void Sigdelset(sigset_t *set, int sig);
+void Sigsuspend(sigset_t *set);
+void Sigprocmask(int how, sigset_t *new_mask, sigset_t *old_mask);
 
 /*
  * main - The shell's main routine
@@ -502,3 +510,83 @@ void sigquit_handler(int sig)
     printf("Terminating after receipt of SIGQUIT signal\n");
     exit(1);
 }
+
+/*
+ * Fork - wrapper for fork function
+ */
+pid_t Fork(void)
+{
+    pid_t pid;
+
+    if ((pid = fork()) < 0)
+        unix_error("fork error");
+
+    return pid;
+}
+
+/*
+ * Setpgid - wrapper for setpgid function
+ */
+void Setpgid(pid_t pid, pid_t pgid)
+{
+    if (setpgid(pid, pgid) == -1)
+        unix_error("setpgid error");
+}
+
+/*
+ * Sigemptyset - wrapper for sigemptyset function
+ */
+void Sigemptyset(sigset_t *set)
+{
+    if (sigemptyset(set) == -1)
+        unix_error("sigemptyset error");
+}
+
+/*
+ * Sigfillset - wrapper for sigfillset function
+ */
+void Sigfillset(sigset_t *set)
+{
+    if (sigfillset(set) == -1)
+        unix_error("sigfillset error");
+}
+
+/*
+ * Sigaddset - wrapper for sigaddset function
+ */
+void Sigaddset(sigset_t *set, int sig)
+{
+    if (sigaddset(set, sig) == -1)
+        unix_error("sigaddset error");
+}
+
+/*
+ * Sigdelset - wrapper for sigdelset function
+ */
+void Sigdelset(sigset_t *set, int sig)
+{
+    if (sigdelset(set, sig) == -1)
+        unix_error("sigdelset error");
+}
+
+/*
+ * Sigsuspend - wrapper for sigsuspend function
+ */
+void Sigsuspend(sigset_t *mask)
+{
+    if (sigsuspend(mask) != -1)
+        unix_error("sigsuspend error");
+}
+
+/*
+ * Sigprocmask - wrapper for sigprocmask function
+ */
+void Sigprocmask(int how, sigset_t *new_mask, sigset_t *old_mask)
+{
+    if (sigprocmask(how, new_mask, old_mask) == -1)
+        unix_error("sigprocmask error");
+}
+
+/***********************
+ * end other helper routines
+ ***********************/
