@@ -339,6 +339,9 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    while(pid == fgpid(jobs)) {
+        Sigsuspend(NULL);
+    }
     return;
 }
 
