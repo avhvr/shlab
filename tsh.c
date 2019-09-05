@@ -355,6 +355,35 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
+    int olderrno = errno;   /* save the errno to restore it later*/
+
+    sigset_t new_mask, old_mask;
+    pid_t pid;
+    int status;
+    struct job_t *job;
+
+    Sigfillset(&new_mask);
+
+    /* block all signals temporarily and store the current mask to old_mask*/
+    Sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+    while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0) {
+        if (WIFSTOPPED(status)) { /* job was stopped? */
+            job = getjobpid(jobs, pid);
+            job->state = ST;
+            printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WSTOPSIG(status));
+        }
+        else if (WIFSIGNALED(status)) {  /* job was terminated by signal? */
+            printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(pid), pid, WTERMSIG(status));
+            deletejob(jobs, pid);
+        }
+        else if (WIFEXITED(status)) {    /* job was exited normally? */
+            deletejob(jobs, pid);
+        }
+    }
+
+    /* restore the current mask to it's previous state*/
+    Sigprocmask(SIG_SETMASK, &old_mask, NULL);
+    errno = olderrno;   /* restore errno */
     return;
 }
 
