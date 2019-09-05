@@ -173,6 +173,49 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline)
 {
+    pid_t pid;              /* process id */
+    char *argv[MAXARGS];    /* argument list */
+    extern char **environ;  /* environment variables */
+
+    int bg = parseline(cmdline, argv);  /* background job? */
+
+    if (argv[0] == NULL)
+        return;             /* Ignore empty lines */
+
+    if (!builtin_cmd(argv)) {
+
+        sigset_t new_mask, chld_mask, old_mask; /* mask for blocking signals */
+
+        Sigfillset(&new_mask);
+
+        /* Initialize an empty mask and add SIGCHLD to it */
+        Sigemptyset(&chld_mask);
+        Sigaddset(&chld_mask, SIGCHLD);
+
+        /* Block SIGCHLD with chld_mask temporarily */
+        Sigprocmask(SIG_BLOCK, &chld_mask, &old_mask);
+
+        pid = Fork();
+
+        /* child process */
+        if (pid == 0) {
+            Sigprocmask(SIG_UNBLOCK, &chld_mask, NULL);
+            setpgid(0, 0); /* set pgid same as pid of child*/
+            if (execve(argv[0], argv, environ) < 0) {
+                printf("%s: Command not found.\n", argv[0]);
+                exit(0);
+            }
+        } else {
+            /* parent process */
+            addjob(jobs, pid, (bg ? BG : FG), cmdline);
+            Sigprocmask(SIG_SETMASK, &old_mask, NULL); /* Unblock SIGCHLD */
+            if (bg)
+                printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
+            else
+                waitfg(pid);    /* Wait for the foreground job to terminate */
+        }
+    }
+
     return;
 }
 
