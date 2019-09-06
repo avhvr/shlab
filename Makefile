@@ -24,6 +24,9 @@ handin:
 # Regression tests
 ##################
 
+tests: all test01 test02 test03 test04 test05 test06 test07 test08 \
+	   test09 test10 test11 test12 test13 test14 test15 test16
+
 # Run tests using the student's shell program
 test01:
 	$(DRIVER) -t trace01.txt -s $(TSH) -a $(TSHARGS)
@@ -57,6 +60,9 @@ test15:
 	$(DRIVER) -t trace15.txt -s $(TSH) -a $(TSHARGS)
 test16:
 	$(DRIVER) -t trace16.txt -s $(TSH) -a $(TSHARGS)
+
+rtests: all rtest01 rtest02 rtest03 rtest04 rtest05 rtest06 rtest07 rtest08 \
+	    rtest09 rtest10 rtest11 rtest12 rtest13 rtest14 rtest15 rtest16
 
 # Run the tests using the reference shell program
 rtest01:
@@ -96,5 +102,3 @@ rtest16:
 # clean up
 clean:
 	rm -f $(FILES) *.o *~
-
-
